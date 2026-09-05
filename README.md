@@ -2,10 +2,10 @@
 
 ---
 
-### **NAME:**  
-### **DEPARTMENT:**  
-### **ROLL NO:**  
-### **DATE OF EXPERIMENT:**  
+### **NAME:** ROGITH K
+### **DEPARTMENT:**  B.E / IOT
+### **ROLL NO:**  212223110042
+### **DATE OF EXPERIMENT:**  05/08/2026
 
 ---
 
@@ -70,46 +70,197 @@ Connect the Rain Sensor (LM393) D0 to any one GPIO.
 Experiment 3A
 ## PROGRAM (Python)
 ```
+import Adafruit_DHT
+import paho.mqtt.client as mqtt
+import ssl
+import time
 
+# ---------------- DHT11 Setup ----------------
 
- 
+DHT_SENSOR = Adafruit_DHT.DHT11
+DHT_PIN = 18  # GPIO18
 
+# ---------------- HiveMQ Cloud Credentials ----------------
 
+MQTT_BROKER = "99abf9ad843d4d2c9de4899b56eb863a.s1.eu.hivemq.cloud"
+MQTT_PORT = 8883
+MQTT_USER = "hivemq.webclient.1785579047827"
+MQTT_PASSWORD = "u;2%rC70tVIM,n<1hfWT"
 
- 
+TEMP_TOPIC = "raspberrypi/dht/temperature"
+HUM_TOPIC = "raspberrypi/dht/humidity"
+
+# ---------------- MQTT Client Setup ----------------
+
+client = mqtt.Client()
+client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
+
+client.tls_set(tls_version=ssl.PROTOCOL_TLS)
+
+client.connect(MQTT_BROKER, MQTT_PORT)
+
+print("Connected to HiveMQ Cloud")
+print("Reading DHT11 Sensor...\n")
+
+# ---------------- Main Loop ----------------
+
+while True:
+
+    humidity, temperature = Adafruit_DHT.read(DHT_SENSOR, DHT_PIN)
+
+    if humidity is not None and temperature is not None:
+
+        print(f"Temperature = {temperature} °C")
+        print(f"Humidity = {humidity} %")
+        print("---------------------------")
+
+        # Publish to HiveMQ
+        client.publish(TEMP_TOPIC, temperature)
+        client.publish(HUM_TOPIC, humidity)
+
+        print("Data sent to HiveMQ\n")
+
+    else:
+        print("Sensor failure. Check wiring.")
+
+    time.sleep(10)
 ````
 
 ### OUPUT  
 
 
+
 # FIGURE -04 ADD TITILE HERE 
+<img width="1280" height="720" alt="image" src="https://github.com/user-attachments/assets/182380d8-95e2-48fb-8099-cf7270abad8e" />
 
 #  FIGURE -05 ADD TITILE HERE 
+<img width="546" height="341" alt="image" src="https://github.com/user-attachments/assets/3197416a-773d-4f95-8b3b-54f09a5ccab7" />
 
 # FIGURE -06 ADD TITLE HERE 
+<img width="1862" height="917" alt="Screenshot 2026-08-01 155455" src="https://github.com/user-attachments/assets/319b2716-9cea-4acb-9167-e5408b0e3ffd" />
 
 Experiment 3B
 ## PROGRAM (Python)
 ```
+import time
+import ssl
+import json
+import RPi.GPIO as GPIO
+import paho.mqtt.client as mqtt
 
+# =====================================================
+# GPIO SETUP
+# =====================================================
 
- 
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 
+RAIN_SENSOR_PIN = 18
 
+GPIO.setup(RAIN_SENSOR_PIN, GPIO.IN)
 
+# =====================================================
+# MQTT SETUP
+# =====================================================
+
+MQTT_BROKER = "99abf9ad843d4d2c9de4899b56eb863a.s1.eu.hivemq.cloud"
+MQTT_PORT = 8883
+
+MQTT_USER = "hivemq.webclient. 1785581075112"
+MQTT_PASSWORD = ".WszV%830apZI@X?ye4G"
+
+MQTT_TOPIC = "raspberrypi/rain"
+
+client = mqtt.Client()
+
+client.username_pw_set(
+    MQTT_USER,
+    MQTT_PASSWORD
+)
+
+client.tls_set(
+    tls_version=ssl.PROTOCOL_TLS
+)
+
+# =====================================================
+# CONNECT TO HIVEMQ
+# =====================================================
+
+print("Connecting to HiveMQ Cloud...")
+
+client.connect(
+    MQTT_BROKER,
+    MQTT_PORT
+)
+
+client.loop_start()
+
+print("Connected Successfully")
+
+# =====================================================
+# MAIN LOOP
+# =====================================================
+
+try:
+
+    while True:
+
+        rain_value = GPIO.input(RAIN_SENSOR_PIN)
+
+        # ACTIVE LOW SENSOR
+        if rain_value == 0:
+
+            status = "RAIN DETECTED"
+            rain_status = 1
+
+        else:
+
+            status = "NO RAIN"
+            rain_status = 0
+
+        print(status)
+
+        payload = {
+            "rain_status": rain_status,
+            "message": status
+        }
+
+        client.publish(
+            MQTT_TOPIC,
+            json.dumps(payload)
+        )
+
+        print("Data Published")
+        print(payload)
+
+        time.sleep(5)
+
+except KeyboardInterrupt:
+
+    print("Program Stopped")
+
+finally:
+
+    GPIO.cleanup()
+
+    client.loop_stop()
+    client.disconnect()
+
+    print("GPIO Cleaned")
+    print("MQTT Disconnected")
  
 ````
 
 ### OUPUT  
 
 # FIGURE -07 ADD TITILE HERE 
+<img width="1280" height="720" alt="image" src="https://github.com/user-attachments/assets/cff40085-203d-455e-b43e-690a9d4c1ca7" />
 
 #  FIGURE -08 ADD TITILE HERE 
+<img width="1280" height="720" alt="image" src="https://github.com/user-attachments/assets/4dd44c89-62d4-4866-bea8-a535ec2a819e" />
 
 # FIGURE -09 ADD TITLE HERE 
-
-
-
+<img width="1920" height="1080" alt="Screenshot 2026-08-01 164004" src="https://github.com/user-attachments/assets/d5e6e2fe-be82-4843-93f9-fa2c026ef488" />
 
 ## **RESULT:**  
 The **Temperature and humidity sensor (DHT 11) Rain Sensor (LM393)** was successfully interfaced with the **Raspberry Pi 4**, and real-time **Temperature, Humidity and Rain status** were read and displayed in Console and HiveMq Cloud. 
